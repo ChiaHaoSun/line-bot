@@ -2,7 +2,9 @@
 
 namespace App\Services\Event;
 
+use App\Services\API\Guzzle;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use LINE\LINEBot\Constant\EventSourceType;
 use LINE\LINEBot\MessageBuilder\MultiMessageBuilder;
 use LINE\LINEBot\MessageBuilder\TextMessageBuilder;
@@ -11,12 +13,14 @@ use LINE\LINEBot\MessageBuilder\StickerMessageBuilder;
 final class User extends AbstractEvent
 {
     private $event;
+    protected $guzzle;
 
     public function __construct($LINE, $logHandler, $message, $event)
     {
         parent::__construct($LINE, $logHandler, $message);
         $this->logHandler->setSourceType(EventSourceType::USER);
         $this->event = $event;
+        $this->guzzle = new Guzzle();
     }
 
     /**
@@ -107,7 +111,24 @@ final class User extends AbstractEvent
     {
         $replyToken = $event->getReplyToken();
         $requestData = $event->getPostbackData();
-        $resp = $this->shareMessage($requestData, $replyToken);
+        $matches = Str::is('action*', $requestData);
+
+        if ($matches) {
+            $slice = Str::after($requestData, 'action=');
+            $userId = $event->getUserId();
+            $this->guzzle->cancelRichMenu($userId);
+
+            switch ($slice) {
+                case 'menu1':
+                    $this->guzzle->setRichMenu($userId, config('services.line.bot.richmenu.1'));
+                    break;
+                case 'menu2':
+                    $this->guzzle->setRichMenu($userId, config('services.line.bot.richmenu.2'));
+                    break;
+            }
+        } else {
+            $resp = $this->shareMessage($requestData, $replyToken);
+        }
 
         if (!empty($resp)) {
             $this->respHandler('postBack', $resp);

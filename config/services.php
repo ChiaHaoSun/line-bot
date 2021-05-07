@@ -33,7 +33,11 @@ return [
     'line' => [
         'bot' => [
             'channel_secret' => env('LINE_BOT_CHANNEL_SECRET'),
-            'channel_access_token' => env('LINE_BOT_CHANNEL_ACCESS_TOKEN')
+            'channel_access_token' => env('LINE_BOT_CHANNEL_ACCESS_TOKEN'),
+            'richmenu' => [
+                1 => env('LINE_BOT_RICHMENU_1'),
+                2 => env('LINE_BOT_RICHMENU_2')
+            ],
         ]
     ],
 ];
